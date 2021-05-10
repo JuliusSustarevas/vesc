@@ -45,55 +45,55 @@
 
 namespace vesc_hw_interface
 {
-using vesc_driver::VescInterface;
-using vesc_driver::VescPacket;
-using vesc_driver::VescPacketValues;
+  using vesc_driver::VescInterface;
+  using vesc_driver::VescPacket;
+  using vesc_driver::VescPacketValues;
 
-class VescHwInterface : public hardware_interface::RobotHW
-{
-public:
-  VescHwInterface();
-  ~VescHwInterface();
+  class VescHwInterface : public hardware_interface::RobotHW
+  {
+  public:
+    VescHwInterface();
+    ~VescHwInterface();
 
-  bool init(ros::NodeHandle&, ros::NodeHandle&);
-  void read();
-  void read(const ros::Time&, const ros::Duration&);
-  void write();
-  void write(const ros::Time&, const ros::Duration&);
-  ros::Time getTime() const;
-  ros::Duration getPeriod() const;
+    bool init(ros::NodeHandle &, ros::NodeHandle &);
+    void read();
+    void read(const ros::Time &, const ros::Duration &);
+    void write();
+    void write(const ros::Time &, const ros::Duration &);
+    ros::Time getTime() const;
+    ros::Duration getPeriod() const;
 
-private:
-  VescInterface vesc_interface_;
-  VescServoController servo_controller_;
+  private:
+    VescInterface vesc_interface_;
+    VescServoController servo_controller_;
 
-  std::string joint_name_, command_mode_;
+    std::string joint_name_, command_mode_;
+    double command_;
+    double position_, velocity_, effort_; // joint states
 
-  double command_;
-  double position_, velocity_, effort_;  // joint states
+    double gear_ratio_, torque_const_, pole_pairs_, duty_limit_, erpm_limit_;// physical params.
 
-  double gear_ratio_, torque_const_;  // physical params.
+    // ROS
+    ros::Publisher state_pub_;
+    ros::Timer timer_;
+    double state_pub_rate_;
+    vesc_msgs::VescStateStamped::Ptr state_msg_;
 
-  // ROS services
-  ros::Publisher state_pub_;  
-  ros::Timer timer_;
-  vesc_msgs::VescStateStamped::Ptr state_msg_;  
+    hardware_interface::JointStateInterface joint_state_interface_;
+    hardware_interface::PositionJointInterface joint_position_interface_;
+    hardware_interface::VelocityJointInterface joint_velocity_interface_;
+    hardware_interface::EffortJointInterface joint_effort_interface_;
 
-  hardware_interface::JointStateInterface joint_state_interface_;
-  hardware_interface::PositionJointInterface joint_position_interface_;
-  hardware_interface::VelocityJointInterface joint_velocity_interface_;
-  hardware_interface::EffortJointInterface joint_effort_interface_;
+    joint_limits_interface::JointLimits joint_limits_;
+    joint_limits_interface::PositionJointSaturationInterface limit_position_interface_;
+    joint_limits_interface::VelocityJointSaturationInterface limit_velocity_interface_;
+    joint_limits_interface::EffortJointSaturationInterface limit_effort_interface_;
 
-  joint_limits_interface::JointLimits joint_limits_;
-  joint_limits_interface::PositionJointSaturationInterface limit_position_interface_;
-  joint_limits_interface::VelocityJointSaturationInterface limit_velocity_interface_;
-  joint_limits_interface::EffortJointSaturationInterface limit_effort_interface_;
+    void timerCallback(const ros::TimerEvent &event);
+    void packetCallback(const boost::shared_ptr<VescPacket const> &);
+    void errorCallback(const std::string &);
+  };
 
-  void timerCallback(const ros::TimerEvent& event);
-  void packetCallback(const boost::shared_ptr<VescPacket const>&);
-  void errorCallback(const std::string&);
-};
+} // namespace vesc_hw_interface
 
-}  // namespace vesc_hw_interface
-
-#endif  // VESC_HW_INTERFACE_VESC_HW_INTERFACE_H_
+#endif // VESC_HW_INTERFACE_VESC_HW_INTERFACE_H_

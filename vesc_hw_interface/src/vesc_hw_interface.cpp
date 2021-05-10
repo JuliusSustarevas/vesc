@@ -78,6 +78,10 @@ namespace vesc_hw_interface
     // reads system parameters
     nh.param<double>("gear_ratio", gear_ratio_, 1.0);
     nh.param<double>("torque_const", torque_const_, 1.0);
+    nh.param<double>("pole_pairs", pole_pairs_, 1.0);
+    nh.param<double>("duty_limit", duty_limit_, 0.5);
+    nh.param<double>("state_pub_rate", state_pub_rate_, 10.0);
+    nh.param<double>("erpm_limit", erpm_limit_, 0.0);
 
     // reads driving mode setting
     // - assigns an empty string if param. is not found
@@ -126,10 +130,10 @@ namespace vesc_hw_interface
       // ros::shutdown();
       return false;
     }
-    
+
     state_pub_ = nh.advertise<vesc_msgs::VescStateStamped>("vesc_state", 10);
     // create a 10Hz timer, used for state machine & polling VESC telemetry
-    timer_ = nh.createTimer(ros::Duration(1.0 / 10.0), &VescHwInterface::timerCallback, this);
+    timer_ = nh.createTimer(ros::Duration(1.0 / state_pub_rate_), &VescHwInterface::timerCallback, this);
 
     return true;
   }
@@ -163,8 +167,10 @@ namespace vesc_hw_interface
     {
       limit_velocity_interface_.enforceLimits(getPeriod());
 
-      // converts the velocity unit: rad/s or m/s -> rpm
-      double ref_velocity_rpm = gear_ratio_ * command_ * 60 / (2 * M_PI);
+      double ref_velocity_rpm = pole_pairs_ * gear_ratio_ * command_ * 60 / (2 * M_PI);
+
+      ref_velocity_rpm = std::max(-erpm_limit_, ref_velocity_rpm);
+      ref_velocity_rpm = std::min(erpm_limit_, ref_velocity_rpm);
 
       // sends a reference velocity command
       vesc_interface_.setSpeed(ref_velocity_rpm);
@@ -181,8 +187,8 @@ namespace vesc_hw_interface
     }
     else if (command_mode_ == "effort_duty")
     {
-      command_ = std::max(-1.0, command_);
-      command_ = std::min(1.0, command_);
+      command_ = std::max(-duty_limit_, command_);
+      command_ = std::min(duty_limit_, command_);
 
       // sends a  duty command
       vesc_interface_.setDutyCycle(command_);
@@ -217,7 +223,7 @@ namespace vesc_hw_interface
       double position_pulse = values->getPosition();
 
       position_ = position_pulse / gear_ratio_ - servo_controller_.getZeroPosition(); // unit: rad or m
-      velocity_ = velocity_rpm * 2 * M_PI / 60.0 / gear_ratio_;                       // unit: rad/s or m/s
+      velocity_ = velocity_rpm * (2 * M_PI / 60.0) / (gear_ratio_ * pole_pairs_);     // unit: rad/s or m/s
       effort_ = current * torque_const_ * gear_ratio_;                                // unit: Nm or N
 
       vesc_msgs::VescStateStamped::Ptr state_msg(new vesc_msgs::VescStateStamped);

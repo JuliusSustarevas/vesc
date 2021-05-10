@@ -1,3 +1,15 @@
+# About
+
+This repo is a fork from  https://github.com/sbgisen/vesc
+
+## Additions:
+- vesc_hw_interface
+    - now includes a combined hardware interface for multiple vescs
+    - now also publishes vesc driver state message. Rate of publication is controlled via param state_pub_rate (default 10 (Hz))
+    - now includes pole_pair parameter for computing eprm (default 1.0 )
+    - now has a explicit duty limit parameter duty_limit (default 0.5). This is as sometimes motors are given much more voltage that they are rated for and should not cross some threshold. E.g. input voltage 48v, rated voltage 24v. setDutyCycle should not cross 0.5.
+    - now has an explicit erpm_limit parameter that, for ease of mind, sets a very explicit max erpm command.  The default value is 0, which means unless you specify a reasonable range - it will not work.  This is for those, like me, who want to make sure they do not burn any hardware. 
+
 # VESC
 ## ROS Interfaces for VESC Motor Drivers
 
