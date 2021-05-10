@@ -73,6 +73,11 @@ private:
 
   double gear_ratio_, torque_const_;  // physical params.
 
+  // ROS services
+  ros::Publisher state_pub_;  
+  ros::Timer timer_;
+  vesc_msgs::VescStateStamped state_msg_;
+
   hardware_interface::JointStateInterface joint_state_interface_;
   hardware_interface::PositionJointInterface joint_position_interface_;
   hardware_interface::VelocityJointInterface joint_velocity_interface_;
@@ -83,6 +88,7 @@ private:
   joint_limits_interface::VelocityJointSaturationInterface limit_velocity_interface_;
   joint_limits_interface::EffortJointSaturationInterface limit_effort_interface_;
 
+  void timerCallback(const ros::TimerEvent& event);
   void packetCallback(const boost::shared_ptr<VescPacket const>&);
   void errorCallback(const std::string&);
 };

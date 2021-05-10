@@ -127,6 +127,9 @@ namespace vesc_hw_interface
       return false;
     }
 
+    // create a 10Hz timer, used for state machine & polling VESC telemetry
+    timer_ = nh.createTimer(ros::Duration(1.0 / 10.0), &VescDriver::timerCallback, this);
+
     return true;
   }
 
@@ -215,9 +218,31 @@ namespace vesc_hw_interface
       position_ = position_pulse / gear_ratio_ - servo_controller_.getZeroPosition(); // unit: rad or m
       velocity_ = velocity_rpm * 2 * M_PI / 60.0 / gear_ratio_;                       // unit: rad/s or m/s
       effort_ = current * torque_const_ * gear_ratio_;                                // unit: Nm or N
+
+      vesc_msgs::VescStateStamped::Ptr state_msg(new vesc_msgs::VescStateStamped);
+      state_msg->header.stamp = ros::Time::now();
+      state_msg->state.voltage_input = values->getInputVoltage();
+      state_msg->state.temperature_pcb = values->getMotorTemp();
+      state_msg->state.current_motor = values->getMotorCurrent();
+      state_msg->state.current_input = values->getInputCurrent();
+      state_msg->state.speed = values->getRpm();
+      state_msg->state.duty_cycle = values->getDuty();
+      state_msg->state.charge_drawn = values->getConsumedCharge();
+      state_msg->state.charge_regen = values->getInputCharge();
+      state_msg->state.energy_drawn = values->getConsumedPower();
+      state_msg->state.energy_regen = values->getInputPower();
+      state_msg->state.displacement = values->getPosition();
+      state_msg->state.distance_traveled = values->getDisplacement();
+      state_msg->state.fault_code = values->getFaultCode();
+      state_msg_ = state_msg
     }
 
     return;
+  }
+
+  void VescDriver::timerCallback(const ros::TimerEvent &event)
+  {
+    state_pub_.publish(state_msg_);
   }
 
   void VescHwInterface::errorCallback(const std::string &error)
