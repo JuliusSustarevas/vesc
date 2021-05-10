@@ -41,6 +41,7 @@
 #include "vesc_driver/vesc_packet_factory.h"
 #include "vesc_driver/vesc_interface.h"
 #include "vesc_hw_interface/vesc_servo_controller.h"
+#include "vesc_msgs/VescStateStamped.h"
 
 namespace vesc_hw_interface
 {
@@ -76,7 +77,7 @@ private:
   // ROS services
   ros::Publisher state_pub_;  
   ros::Timer timer_;
-  vesc_msgs::VescStateStamped state_msg_;
+  vesc_msgs::VescStateStamped::Ptr state_msg_;  
 
   hardware_interface::JointStateInterface joint_state_interface_;
   hardware_interface::PositionJointInterface joint_position_interface_;

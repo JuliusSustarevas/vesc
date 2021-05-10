@@ -126,9 +126,10 @@ namespace vesc_hw_interface
       // ros::shutdown();
       return false;
     }
-
+    
+    state_pub_ = nh.advertise<vesc_msgs::VescStateStamped>("vesc_state", 10);
     // create a 10Hz timer, used for state machine & polling VESC telemetry
-    timer_ = nh.createTimer(ros::Duration(1.0 / 10.0), &VescDriver::timerCallback, this);
+    timer_ = nh.createTimer(ros::Duration(1.0 / 10.0), &VescHwInterface::timerCallback, this);
 
     return true;
   }
@@ -234,13 +235,13 @@ namespace vesc_hw_interface
       state_msg->state.displacement = values->getPosition();
       state_msg->state.distance_traveled = values->getDisplacement();
       state_msg->state.fault_code = values->getFaultCode();
-      state_msg_ = state_msg
+      state_msg_ = state_msg;
     }
 
     return;
   }
 
-  void VescDriver::timerCallback(const ros::TimerEvent &event)
+  void VescHwInterface::timerCallback(const ros::TimerEvent &event)
   {
     state_pub_.publish(state_msg_);
   }
