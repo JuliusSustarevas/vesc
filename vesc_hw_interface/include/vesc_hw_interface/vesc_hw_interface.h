@@ -69,7 +69,7 @@ namespace vesc_hw_interface
 
     std::string joint_name_, command_mode_;
     double command_;
-    double position_, velocity_, effort_; // joint states
+    double position_, velocity_, effort_, joint_zero_position_; // joint states
 
     double gear_ratio_, torque_const_, pole_pairs_, duty_limit_, erpm_limit_;// physical params.
 

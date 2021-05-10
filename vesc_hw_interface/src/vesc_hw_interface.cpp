@@ -74,6 +74,7 @@ namespace vesc_hw_interface
     position_ = 0.0;
     velocity_ = 0.0;
     effort_ = 0.0;
+    joint_zero_position_ = 0.0;
 
     // reads system parameters
     nh.param<double>("gear_ratio", gear_ratio_, 1.0);
@@ -172,6 +173,7 @@ namespace vesc_hw_interface
       ref_velocity_rpm = std::max(-erpm_limit_, ref_velocity_rpm);
       ref_velocity_rpm = std::min(erpm_limit_, ref_velocity_rpm);
 
+      // ROS_INFO("Set speed %f",ref_velocity_rpm);
       // sends a reference velocity command
       vesc_interface_.setSpeed(ref_velocity_rpm);
     }
@@ -218,13 +220,20 @@ namespace vesc_hw_interface
     {
       boost::shared_ptr<VescPacketValues const> values = boost::dynamic_pointer_cast<VescPacketValues const>(packet);
 
+      
       double current = values->getMotorCurrent();
       double velocity_rpm = values->getRpm();
       double position_pulse = values->getPosition();
-
-      position_ = position_pulse / gear_ratio_ - servo_controller_.getZeroPosition(); // unit: rad or m
-      velocity_ = velocity_rpm * (2 * M_PI / 60.0) / (gear_ratio_ * pole_pairs_);     // unit: rad/s or m/s
-      effort_ = current * torque_const_ * gear_ratio_;                                // unit: Nm or N
+      
+      // position_ = position_pulse / gear_ratio_ - servo_controller_.getZeroPosition(); // unit: rad or m
+      position_ = position_pulse * 2 * M_PI / (pole_pairs_ * 2 * 3 * gear_ratio_) - servo_controller_.getZeroPosition()  -  joint_zero_position_;
+      velocity_ = velocity_rpm * (2 * M_PI / 60.0) / (gear_ratio_ * pole_pairs_);                                           
+      effort_ = current * torque_const_ * gear_ratio_;          
+      
+      // Will either override 0 with 0  or otherwise set the joint zero position to the value that vesc is  when interface starts
+      if (joint_zero_position_==0.0){
+        joint_zero_position_=position_;
+      }                                                           
 
       vesc_msgs::VescStateStamped::Ptr state_msg(new vesc_msgs::VescStateStamped);
       state_msg->header.stamp = ros::Time::now();
@@ -232,14 +241,14 @@ namespace vesc_hw_interface
       state_msg->state.temperature_pcb = values->getMotorTemp();
       state_msg->state.current_motor = values->getMotorCurrent();
       state_msg->state.current_input = values->getInputCurrent();
-      state_msg->state.speed = values->getRpm();
+      state_msg->state.speed = velocity_;
       state_msg->state.duty_cycle = values->getDuty();
       state_msg->state.charge_drawn = values->getConsumedCharge();
       state_msg->state.charge_regen = values->getInputCharge();
       state_msg->state.energy_drawn = values->getConsumedPower();
       state_msg->state.energy_regen = values->getInputPower();
       state_msg->state.displacement = values->getPosition();
-      state_msg->state.distance_traveled = values->getDisplacement();
+      state_msg->state.distance_traveled = position_;
       state_msg->state.fault_code = values->getFaultCode();
       state_msg_ = state_msg;
     }
