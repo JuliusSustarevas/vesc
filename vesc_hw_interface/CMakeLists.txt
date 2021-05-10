@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   urdf
   vesc_driver
+  combined_robot_hw
 )
 
 catkin_package(
@@ -28,6 +29,7 @@ catkin_package(
     pluginlib
     urdf
     vesc_driver
+    combined_robot_hw
 )
 
 include_directories(
@@ -44,10 +46,17 @@ add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_node
-  src/vesc_hw_interface_node.cpp
+  src/vesc_hw_interface_node.cpp  
 )
+
+add_executable(multi_vesc_hw_interface_node
+  src/multi_vesc_hw_interface_node.cpp
+)
+
 add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES} ${PROJECT_NAME})
+
+target_link_libraries(multi_vesc_hw_interface_node ${catkin_LIBRARIES})
 
 install(TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}

@@ -214,7 +214,8 @@ void VescHwInterface::packetCallback(const boost::shared_ptr<VescPacket const>& 
 
     position_ = position_pulse / gear_ratio_ - servo_controller_.getZeroPosition();  // unit: rad or m
     velocity_ = velocity_rpm * 2 * M_PI / 60.0 / gear_ratio_;                        // unit: rad/s or m/s
-    effort_ = current * torque_const_ * gear_ratio_;                                 // unit: Nm or N
+    effort_ = current * torque_const_ * gear_ratio_;                                 // unit: Nm or N   
+
   }
 
   return;
