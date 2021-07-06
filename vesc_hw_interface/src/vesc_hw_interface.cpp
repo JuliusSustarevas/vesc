@@ -132,6 +132,11 @@ namespace vesc_hw_interface
       return false;
     }
 
+
+    // Init this sooner
+    vesc_msgs::VescStateStamped::Ptr state_msg(new vesc_msgs::VescStateStamped);     
+    state_msg_ = state_msg;
+
     state_pub_ = nh.advertise<vesc_msgs::VescStateStamped>("vesc_state", 10);
     // create a 10Hz timer, used for state machine & polling VESC telemetry
     timer_ = nh.createTimer(ros::Duration(1.0 / state_pub_rate_), &VescHwInterface::timerCallback, this);
